@@ -34,10 +34,6 @@
                 {
                     "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
                     "topics": ["log", "proc"]
-                },
-                {
-                    "endPoint": "DB_ENDPOINT_ADDR",
-                    "topics": ["log", "proc"]
                 }
             ]
         },
@@ -52,10 +48,6 @@
             "endPoint": "POINT_IN_POLY_ENDPOINT_ADDR",
             "subscriptions": [
                 {
-                    "endPoint": "DB_ENDPOINT_ADDR",
-                    "topics" : ["proc", "requestPolygon", "gpsData"]
-                },
-                {
                     "endPoint": "GPS_IF_ENDPOINT_ADDR",
                     "topics" : ["proc", "gpsData"]
                 },
@@ -67,13 +59,9 @@
         },
         {
             "processName": "webServer",
-            "processPath": "/usr/local/examples/geofencing/server/server.js",
+            "processPath": "/usr/local/geofencing-demo/server/server.js",
             "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
             "subscriptions": [
-                {
-                    "endPoint": "DB_ENDPOINT_ADDR",
-                    "topics" : ["proc", "pointInPolygon", "gpsData"]
-                }
             ]
         }
     ]
