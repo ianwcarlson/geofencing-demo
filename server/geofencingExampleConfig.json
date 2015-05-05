@@ -1,0 +1,80 @@
+{
+    "endPointsIds" : [
+        {
+            "id" : "GPS_IF_ENDPOINT_ADDR",
+            "address" : "tcp://127.0.0.1:5550"
+        },
+        {
+            "id" : "POINT_IN_POLY_ENDPOINT_ADDR",
+            "address" : "tcp://127.0.0.1:5561"
+        },
+        {
+            "id" : "WEB_SERVER_ENDPOINT_ADDR",
+            "address" : "tcp://127.0.0.1:5562"
+        },
+        {
+            "id" : "LOGGER_ENDPOINT_ADDR",
+            "address" : "tcp://127.0.0.1:5554"
+        }
+    ],    
+    "processList" : [
+        {
+            "processName": "log",
+            "processPath": "/usr/local/geofencing-demo/server/log.py",
+            "endPoint": "LOGGER_ENDPOINT_ADDR",
+            "subscriptions": [
+                {
+                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
+                    "topics": ["log", "proc"]
+                },
+                {
+                    "endPoint": "POINT_IN_POLY_ENDPOINT_ADDR",
+                    "topics": ["log", "proc"]
+                },
+                {
+                    "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
+                    "topics": ["log", "proc"]
+                },
+                {
+                    "endPoint": "DB_ENDPOINT_ADDR",
+                    "topics": ["log", "proc"]
+                }
+            ]
+        },
+        {
+            "processName": "gpsInterface",
+            "processPath": "/usr/local/geofencing-demo/server/gpsInterface.py",
+            "endPoint": "GPS_IF_ENDPOINT_ADDR"
+        },
+        {
+            "processName": "pointInPolygon",
+            "processPath": "/usr/local/geofencing-demo/server/pointInPolygon.py",
+            "endPoint": "POINT_IN_POLY_ENDPOINT_ADDR",
+            "subscriptions": [
+                {
+                    "endPoint": "DB_ENDPOINT_ADDR",
+                    "topics" : ["proc", "requestPolygon", "gpsData"]
+                },
+                {
+                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
+                    "topics" : ["proc", "gpsData"]
+                },
+                {
+                    "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
+                    "topics" : ["proc", "newPolygonPoints"]
+                }
+            ]
+        },
+        {
+            "processName": "webServer",
+            "processPath": "/usr/local/examples/geofencing/server/server.js",
+            "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
+            "subscriptions": [
+                {
+                    "endPoint": "DB_ENDPOINT_ADDR",
+                    "topics" : ["proc", "pointInPolygon", "gpsData"]
+                }
+            ]
+        }
+    ]
+}
