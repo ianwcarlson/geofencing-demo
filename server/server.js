@@ -2,15 +2,17 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-
+var scriptDir = process.cwd();
 var path = require('path');
-var pathToLib = path.resolve(__dirname,'..','lib','python-zeromq-pubsub',
-	'src','processNode.js');
-var processNode = require(pathToLib)(pathToNetworkConfig, 
-	nameOfProcess, 0);
-
+__dirname = path.dirname(module.filename);
 var nameOfProcess = process.argv[2];
 var pathToNetworkConfig = process.argv[3];
+
+var pathToLib = path.join(__dirname,'..','lib','python-zeromq-pubsub',
+	'src','processNode.js');
+
+var processNode = require(pathToLib)(pathToNetworkConfig, 
+	nameOfProcess, 0);
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');

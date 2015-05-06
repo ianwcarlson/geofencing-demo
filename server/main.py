@@ -7,5 +7,6 @@ sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
 import processManager
 
 processManager = processManager.ProcessManager()	
-processManager.importProcessConfig(os.path.join(scriptDir,'geofencingExampleConfig.json'))
+processManager.importProcessConfig(os.path.join(
+	scriptDir,'geofencingExampleConfig.json'))
 processManager.run()
