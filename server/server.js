@@ -18,9 +18,15 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-var pathToLeafletDraw = path.join(__dirname,'clientLibs','leaflet.draw','dist');
-console.log('pathToLeafletDraw: ', pathToLeafletDraw);
+var pathToLeafletDraw = path.join(__dirname,'clientLibs',
+	'leaflet.draw','dist');
+var pathToLeafletSmooth = path.join(__dirname,'clientLibs',
+	'Leaflet.SmoothMarkerTransition','src');
+var pathToClient = path.join(__dirname,'clientLibs');
+
 app.use(express.static(pathToLeafletDraw));
+app.use(express.static(pathToLeafletSmooth));
+app.use(express.static(pathToClient));
 
 io.on('connection', function(socket){
 	socket.on('newPolygonPoints', function(newPolygonPoints){			
