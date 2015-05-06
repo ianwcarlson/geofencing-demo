@@ -18,11 +18,13 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-app.use(express.static(__dirname + '../bower_compenents/leaflet.draw/dist'));
+var pathToLeafletDraw = path.join(__dirname,'clientLibs','leaflet.draw','dist');
+console.log('pathToLeafletDraw: ', pathToLeafletDraw);
+app.use(express.static(pathToLeafletDraw));
 
 io.on('connection', function(socket){
 	socket.on('newPolygonPoints', function(newPolygonPoints){			
-		processNode.send(['newPolygonPoints', newMsg]);
+		processNode.send('newPolygonPoints', newPolygonPoints);
 	});
 });
 

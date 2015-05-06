@@ -62,6 +62,14 @@
             "processPath": "/usr/local/geofencing-demo/server/server.js",
             "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
             "subscriptions": [
+                {
+                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
+                    "topics" : ["proc", "gpsData"]
+                },
+                {
+                    "endPoint": "POINT_IN_POLY_ENDPOINT_ADDR",
+                    "topics" : ["proc", "pointInPolygon"]
+                }
             ]
         }
     ]
