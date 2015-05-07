@@ -25,4 +25,5 @@ RUN npm install -g gulp
 RUN rm /usr/bin/python
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
+RUN pip3 install simplekml
 
