@@ -15,6 +15,9 @@ TIME_BUFFER = 30
 REMOTE_DATA_URL = "http://data.cabq.gov/transit/realtime/route/route790.kml"
 TOTAL_SECS_IN_DAY = 24*60*60 
 
+def getTimeKey(inDict):
+	return inDict['timeStamp']
+
 class AbqBusLocationInterface():
 	def __init__(self, processName=None, fullConfigPath=None):		
 		#gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
@@ -46,7 +49,6 @@ class AbqBusLocationInterface():
 				documentChildren = kmlDoc.Document.getchildren()
 				validRoutes = self.findValidRoutes(documentChildren)
 				self.initializeMasterDict(validRoutes)
-				pdb.set_trace()
 				for item in documentChildren:
 					itemTag = item.tag
 					if (itemTag.find('Placemark') != -1):
@@ -70,7 +72,10 @@ class AbqBusLocationInterface():
 						# print ('Route: ' + str(routeName) + \
 						# 	' Time: ' + str(routeTime) + \
 						# 	' Location: ' + routeLocation)
-
+				self.orderMasterDict()
+				print('Before: ' + str(self.masterDict))
+				self.removeInvalidTimeStamps()
+				print('After: ' + str(self.masterDict))
 				pdb.set_trace()
 
 				if (kmlDoc != None):
@@ -97,7 +102,33 @@ class AbqBusLocationInterface():
 		return validCoordinates, lat, lng
 
 	def orderMasterDict(self):
-		pass
+		for key, value in self.masterDict.items():
+			self.masterDict[key] = sorted(value, key=getTimeKey)
+
+	def removeInvalidTimeStamps(self):
+		for key, value in self.masterDict.items():
+			matchTimeList = []
+			idx = 0
+			while(idx != len(value)):
+				timeStamp = value[idx]['timeStamp']
+				if timeStamp not in matchTimeList:
+					matchTimeList.append(timeStamp)
+				else:
+					value.pop(idx)
+
+				idx += 1
+
+			matchTimeList.sort()
+
+			# remove timestamps that are more than N seconds in the past
+			# not sure why these datapoints are in there
+			idx = 0
+			while(idx != len(value)):
+				timeStamp = value[idx]['timeStamp']
+				if (timeStamp < matchTimeList[-1] - TIME_BUFFER):
+					value.pop(idx)
+
+				idx += 1
 
 
 	def findValidRoutes(self, kmlDocChildren):
