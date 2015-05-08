@@ -4,8 +4,7 @@ import pdb
 import os
 import sys
 import time
-import 
-from Sets import Set
+import json
 scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
@@ -23,8 +22,8 @@ class AbqBusLocationInterface():
 		epochStamp = self._getCurrentUtcTime()
 		self.adjustedSeedTime = epochStamp - 30
 		self.seedTimeTuple = time.gmtime(self.adjustedSeedTime)
-		seedTimeString = 'SeedTime: ' + str(timeTuple.tm_hour) + ':' + \
-			str(timeTuple.tm_min) + ':' + str(timeTuple.tm_sec)
+		seedTimeString = 'SeedTime: ' + str(self.seedTimeTuple.tm_hour) + ':' + \
+			str(self.seedTimeTuple.tm_min) + ':' + str(self.seedTimeTuple.tm_sec)
 		print (seedTimeString)
 		self.masterDict = {}
 
@@ -45,27 +44,34 @@ class AbqBusLocationInterface():
 					gpsInterfaceNode.log(logLevel=3, message="Unable to parse remote data")
 
 				documentChildren = kmlDoc.Document.getchildren()
-
-
-
+				validRoutes = self.findValidRoutes(documentChildren)
+				self.initializeMasterDict(validRoutes)
+				pdb.set_trace()
 				for item in documentChildren:
 					itemTag = item.tag
 					if (itemTag.find('Placemark') != -1):
-						routeName = item.name
-						masterDict[routeName] = []
-
+						routeName = str(item.name)
 						tableItems = item.description.table.getchildren()
 						for tableItem in tableItems:
 							if (tableItem.td == 'Msg Time'):
 								timeItems = tableItem.getchildren()
-								routeTime = timeItems[1]
+								routeTime = self.convertTime(str(timeItems[1]))
 
 						routeLocation = item.Point.coordinates
-						masterDict[routeName].append
+						valid, lat, lng = self.parseCoordinates(str(routeLocation))
+						if (valid):
 
-						print ('Route: ' + str(routeName) + \
-							' Time: ' + str(routeTime) + \
-							' Location: ' + routeLocation)
+							self.masterDict[routeName].append({
+								'timeStamp': routeTime,
+								'lat': lat,
+								'lng': lng
+							})
+
+						# print ('Route: ' + str(routeName) + \
+						# 	' Time: ' + str(routeTime) + \
+						# 	' Location: ' + routeLocation)
+
+				pdb.set_trace()
 
 				if (kmlDoc != None):
 				#	gpsDataMsg = {
@@ -76,6 +82,23 @@ class AbqBusLocationInterface():
 					# gpsInterfaceNode.send('gpsData', gpsDataMsg)
 					# gpsInterfaceNode.log(logLevel=0, message=gpsDataMsg)
 					time.sleep(UPDATE_INTERVAL_SECS)
+
+	def parseCoordinates(self, coordinatesString):
+		validCoordinates = False
+		lng = -360
+		lat = -360
+		firstIndex = coordinatesString.find(',')
+		if (firstIndex != -1):
+			lng = float(coordinatesString[0:firstIndex])
+			lat = float(coordinatesString[firstIndex+1:])
+			if (lat > -90 and lat < 90 and lng > -180 and lng < 180):
+				validCoordinates = True
+
+		return validCoordinates, lat, lng
+
+	def orderMasterDict(self):
+		pass
+
 
 	def findValidRoutes(self, kmlDocChildren):
 		validRoutes = []
@@ -89,7 +112,11 @@ class AbqBusLocationInterface():
 	def initializeMasterDict(self, validRoutesSet):
 		self.masterDict = {}
 		for item in validRoutesSet:
-			self.masterDict[item] = []
+			self.masterDict[str(item)] = []
+
+	def convertTime(self, timeStamp):
+		hour, minute, sec = self.parseHumanTime(timeStamp)
+		return self.convertHumanToSecsInDay(hour, minute, sec)
 
 	def parseHumanTime(self, timeStamp):
 		'''
@@ -98,22 +125,24 @@ class AbqBusLocationInterface():
 		hour = -1
 		minute = -1
 		sec = -1
-		if (len(timeStamp) < 10):
-			gpsInterfaceNode.log(logLevel=3, message="Invalid time stamp")
-		else:
-			firstIndex = timeStamp.find(':') 
-			if (firstIndex != -1):
-				hour = timeStamp[0:firstIndex]
-				if (timeStamp.find('PM'):
-					hour += 12
-				secondIndex = timeStamp.find(':', firstIndex) 
-				if (secondIndex != -1):
-					minute = timeStamp[firstIndex+1, secondIndex]
-					thirdIndex = timeStamp.find(' ', secondIndex)
-					if (thirdIndex != -1):
-						sec = timeStamp[secondIndex+1, thirdIndex]
+		# pdb.set_trace()
+		# if (len(timeStamp) < 10):
+		# 	gpsInterfaceNode.log(logLevel=3, message="Invalid time stamp")
+		# else:
+		firstIndex = -1
+		firstIndex = timeStamp.find(':') 
+		if (firstIndex != -1):
+			hour = int(timeStamp[0:firstIndex])
+			if (timeStamp.find('PM')):
+				hour += 12
+			secondIndex = timeStamp.find(':', firstIndex+1) 
+			if (secondIndex != -1):
+				minute = int(timeStamp[firstIndex+1: secondIndex])
+				thirdIndex = timeStamp.find(' ', secondIndex+1)
+				if (thirdIndex != -1):
+					sec = int(timeStamp[secondIndex+1: thirdIndex])
 
-		print (hour + ':' + minute + ':' + sec)
+		# print (str(hour) + ':' + str(minute) + ':' + str(sec))
 		if (hour == -1 or minute == -1 or sec == -1):
 			gpsInterfaceNode.log(logLevel=3, message="Unable to parse time stamp")
 
@@ -135,8 +164,6 @@ class AbqBusLocationInterface():
 			newSecs = TOTAL_SECS_IN_DAY + newSecs
 
 		return newSecs
-
-	def orderAndWindowTime
 
 	def _getCurrentUtcTime(self):
 		epochStamp = 0
