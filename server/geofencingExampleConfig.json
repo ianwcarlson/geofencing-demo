@@ -15,6 +15,10 @@
         {
             "id" : "LOGGER_ENDPOINT_ADDR",
             "address" : "tcp://127.0.0.1:5554"
+        },
+        {
+            "id" : "GPS_SEQUENCER_ENDPOINT_ADDR",
+            "address" : "tcp://127.0.0.1:5567"
         }
     ],    
     "processList" : [
@@ -54,6 +58,17 @@
                 {
                     "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
                     "topics" : ["proc", "newPolygonPoints"]
+                }
+            ]
+        },
+        {
+            "processName": "realTimeGpsSequencer",
+            "processPath": "/usr/local/geofencing-demo/server/realTimeGpsSequencer.py",
+            "endPoint": "GPS_SEQUENCER_ENDPOINT_ADDR",
+            "subscriptions": [
+                {
+                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
+                    "topics" : ["proc", "rawGpsData"]
                 }
             ]
         },

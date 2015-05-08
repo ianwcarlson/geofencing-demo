@@ -11,7 +11,7 @@ sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
 import processNode
 import timeApiKey
 
-UPDATE_INTERVAL_SECS = 3
+UPDATE_INTERVAL_SECS = 13
 TIME_BUFFER = 30
 REMOTE_DATA_URL = "http://data.cabq.gov/transit/realtime/route/route790.kml"
 TOTAL_SECS_IN_DAY = 24*60*60 
@@ -21,31 +21,31 @@ def getTimeKey(inDict):
 
 class AbqBusLocationInterface():
 	def __init__(self, processName=None, fullConfigPath=None):		
-		gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
-		done = False
+		self.gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
+		self.done = False
 		epochStamp = self._getCurrentUtcTime()
 		self.adjustedSeedTime = epochStamp - 30
 		self.seedTimeTuple = time.gmtime(self.adjustedSeedTime)
 		seedTimeString = 'SeedTime: ' + str(self.seedTimeTuple.tm_hour) + ':' + \
 			str(self.seedTimeTuple.tm_min) + ':' + str(self.seedTimeTuple.tm_sec)
-		print (seedTimeString)
 		self.masterDict = {}
 
-		while(not(done)):
+	def run (self):
+		while(not(self.done)):
 			kmlString = ''
 			kmlDoc = None
 			try:
 				kmlString = urllib.request.urlopen(REMOTE_DATA_URL).read()
 			except HTTPError as err:
 				print ("Unable to download remote data")
-				gpsInterfaceNode.log(logLevel=3, message="Unable to download remote data")
+				self.gpsInterfaceNode.log(logLevel=3, message="Unable to download remote data")
 
 			fixedString = kmlString.decode('utf8', 'replace')
 			if (kmlString != ''):
 				try:
 					kmlDoc = parser.fromstring(fixedString.encode())
 				except:
-					gpsInterfaceNode.log(logLevel=3, message="Unable to parse remote data")
+					self.gpsInterfaceNode.log(logLevel=3, message="Unable to parse remote data")
 
 				if (kmlDoc != None):
 					documentChildren = kmlDoc.Document.getchildren()
@@ -75,9 +75,9 @@ class AbqBusLocationInterface():
 							# 	' Location: ' + routeLocation)
 					self.orderMasterDict()
 					self.removeInvalidTimeStamps()
-					print ('self.masterDict: ' + str(self.masterDict))
-					gpsInterfaceNode.send('gpsDataRaw', self.masterDict)
-					gpsInterfaceNode.log(logLevel=0, message=self.masterDict)
+					#print ('self.masterDict: ' + str(self.masterDict))
+					self.gpsInterfaceNode.send('rawGpsData', self.masterDict)
+					self.gpsInterfaceNode.log(logLevel=0, message=self.masterDict)
 					time.sleep(UPDATE_INTERVAL_SECS)
 
 	def parseCoordinates(self, coordinatesString):
@@ -204,3 +204,5 @@ if __name__ == '__main__':
 		gpsInterface = AbqBusLocationInterface(sys.argv[1], sys.argv[2])
 	else:
 		gpsInterface = AbqBusLocationInterface()
+
+gpsInterface.run()
