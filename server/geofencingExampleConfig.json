@@ -39,7 +39,7 @@
         },
         {
             "processName": "gpsInterface",
-            "processPath": "/usr/local/geofencing-demo/server/gpsInterface.py",
+            "processPath": "/usr/local/geofencing-demo/server/abqBusLocationInterface.py",
             "endPoint": "GPS_IF_ENDPOINT_ADDR"
         },
         {

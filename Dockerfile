@@ -16,7 +16,7 @@ RUN apt-get install -y python wget build-essential
 RUN wget http://nodejs.org/dist/v0.10.30/node-v0.10.30.tar.gz
 RUN tar -xvf node-v0.10.30.tar.gz
 RUN cd node-v0.10.30 && ./configure && make && make install
-RUN npm install -g gulp
+#RUN npm install -g gulp
 
 # Must install node dependencies before changing
 # sym link to python3
@@ -24,6 +24,6 @@ RUN npm install -g gulp
 
 RUN rm /usr/bin/python
 RUN ln -s /usr/bin/python3 /usr/bin/python
-
-RUN pip3 install simplekml
+RUN apt-get install -y python3-lxml
+RUN pip3 install pykml
 

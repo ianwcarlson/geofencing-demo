@@ -8,6 +8,7 @@ import json
 scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
+import processNode
 import timeApiKey
 
 UPDATE_INTERVAL_SECS = 3
@@ -20,7 +21,7 @@ def getTimeKey(inDict):
 
 class AbqBusLocationInterface():
 	def __init__(self, processName=None, fullConfigPath=None):		
-		#gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
+		gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
 		done = False
 		epochStamp = self._getCurrentUtcTime()
 		self.adjustedSeedTime = epochStamp - 30
@@ -46,46 +47,37 @@ class AbqBusLocationInterface():
 				except:
 					gpsInterfaceNode.log(logLevel=3, message="Unable to parse remote data")
 
-				documentChildren = kmlDoc.Document.getchildren()
-				validRoutes = self.findValidRoutes(documentChildren)
-				self.initializeMasterDict(validRoutes)
-				for item in documentChildren:
-					itemTag = item.tag
-					if (itemTag.find('Placemark') != -1):
-						routeName = str(item.name)
-						tableItems = item.description.table.getchildren()
-						for tableItem in tableItems:
-							if (tableItem.td == 'Msg Time'):
-								timeItems = tableItem.getchildren()
-								routeTime = self.convertTime(str(timeItems[1]))
-
-						routeLocation = item.Point.coordinates
-						valid, lat, lng = self.parseCoordinates(str(routeLocation))
-						if (valid):
-
-							self.masterDict[routeName].append({
-								'timeStamp': routeTime,
-								'lat': lat,
-								'lng': lng
-							})
-
-						# print ('Route: ' + str(routeName) + \
-						# 	' Time: ' + str(routeTime) + \
-						# 	' Location: ' + routeLocation)
-				self.orderMasterDict()
-				print('Before: ' + str(self.masterDict))
-				self.removeInvalidTimeStamps()
-				print('After: ' + str(self.masterDict))
-				pdb.set_trace()
-
 				if (kmlDoc != None):
-				#	gpsDataMsg = {
-					# 	'latitude': point.latitude,
-					# 	'longitude': point.longitude,
-					# 	'altitude': point.elevation				
-					# }
-					# gpsInterfaceNode.send('gpsData', gpsDataMsg)
-					# gpsInterfaceNode.log(logLevel=0, message=gpsDataMsg)
+					documentChildren = kmlDoc.Document.getchildren()
+					validRoutes = self.findValidRoutes(documentChildren)
+					self.initializeMasterDict(validRoutes)
+					for item in documentChildren:
+						itemTag = item.tag
+						if (itemTag.find('Placemark') != -1):
+							routeName = str(item.name)
+							tableItems = item.description.table.getchildren()
+							for tableItem in tableItems:
+								if (tableItem.td == 'Msg Time'):
+									timeItems = tableItem.getchildren()
+									routeTime = self.convertTime(str(timeItems[1]))
+
+							routeLocation = item.Point.coordinates
+							valid, lat, lng = self.parseCoordinates(str(routeLocation))
+							if (valid):
+								self.masterDict[routeName].append({
+									'timeStamp': routeTime,
+									'lat': lat,
+									'lng': lng
+								})
+
+							# print ('Route: ' + str(routeName) + \
+							# 	' Time: ' + str(routeTime) + \
+							# 	' Location: ' + routeLocation)
+					self.orderMasterDict()
+					self.removeInvalidTimeStamps()
+					print ('self.masterDict: ' + str(self.masterDict))
+					gpsInterfaceNode.send('gpsDataRaw', self.masterDict)
+					gpsInterfaceNode.log(logLevel=0, message=self.masterDict)
 					time.sleep(UPDATE_INTERVAL_SECS)
 
 	def parseCoordinates(self, coordinatesString):
@@ -109,7 +101,7 @@ class AbqBusLocationInterface():
 		for key, value in self.masterDict.items():
 			matchTimeList = []
 			idx = 0
-			while(idx != len(value)):
+			while(idx < len(value)):
 				timeStamp = value[idx]['timeStamp']
 				if timeStamp not in matchTimeList:
 					matchTimeList.append(timeStamp)
@@ -123,13 +115,12 @@ class AbqBusLocationInterface():
 			# remove timestamps that are more than N seconds in the past
 			# not sure why these datapoints are in there
 			idx = 0
-			while(idx != len(value)):
+			while(idx < len(value)):
 				timeStamp = value[idx]['timeStamp']
 				if (timeStamp < matchTimeList[-1] - TIME_BUFFER):
 					value.pop(idx)
 
 				idx += 1
-
 
 	def findValidRoutes(self, kmlDocChildren):
 		validRoutes = []
