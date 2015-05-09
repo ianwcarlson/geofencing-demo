@@ -28,7 +28,7 @@ class AbqBusLocationInterface():
 		self.seedTimeTuple = time.gmtime(self.adjustedSeedTime)
 		seedTimeString = 'SeedTime: ' + str(self.seedTimeTuple.tm_hour) + ':' + \
 			str(self.seedTimeTuple.tm_min) + ':' + str(self.seedTimeTuple.tm_sec)
-		self.masterDict = {}
+		self.masterList = []
 
 	def run (self):
 		while(not(self.done)):
@@ -49,22 +49,31 @@ class AbqBusLocationInterface():
 
 				if (kmlDoc != None):
 					documentChildren = kmlDoc.Document.getchildren()
-					validRoutes = self.findValidRoutes(documentChildren)
-					self.initializeMasterDict(validRoutes)
+					# validRoutes = self.findValidRoutes(documentChildren)
+					# self.initializeMasterDict(validRoutes)
 					for item in documentChildren:
+						vehicleID = ''
+						routeTime = ''
+						routeName = ''
+						lat = None
+						lng = None
 						itemTag = item.tag
 						if (itemTag.find('Placemark') != -1):
 							routeName = str(item.name)
 							tableItems = item.description.table.getchildren()
 							for tableItem in tableItems:
-								if (tableItem.td == 'Msg Time'):
-									timeItems = tableItem.getchildren()
-									routeTime = self.convertTime(str(timeItems[1]))
+								tableChildren = tableItem.getchildren()
+								if (tableItem.td == 'Vehicle #'):
+									vehicleID = str(tableChildren[1])
+								elif (tableItem.td == 'Msg Time'):
+									routeTime = self.convertTime(str(tableChildren[1]))
 
 							routeLocation = item.Point.coordinates
 							valid, lat, lng = self.parseCoordinates(str(routeLocation))
 							if (valid):
-								self.masterDict[routeName].append({
+								self.masterList.append({
+									'vehicleID': vehicleID,
+									'route': routeName,
 									'timeStamp': routeTime,
 									'lat': lat,
 									'lng': lng
@@ -73,11 +82,11 @@ class AbqBusLocationInterface():
 							# print ('Route: ' + str(routeName) + \
 							# 	' Time: ' + str(routeTime) + \
 							# 	' Location: ' + routeLocation)
-					self.orderMasterDict()
-					self.removeInvalidTimeStamps()
-					#print ('self.masterDict: ' + str(self.masterDict))
-					self.gpsInterfaceNode.send('rawGpsData', self.masterDict)
-					self.gpsInterfaceNode.log(logLevel=0, message=self.masterDict)
+					#self.orderMasterDict()
+					#self.removeInvalidTimeStamps()
+					print ('self.masterList: ' + str(self.masterList))
+					self.gpsInterfaceNode.send('rawGpsData', self.masterList)
+					self.gpsInterfaceNode.log(logLevel=0, message=self.masterList)
 					time.sleep(UPDATE_INTERVAL_SECS)
 
 	def parseCoordinates(self, coordinatesString):
@@ -93,48 +102,48 @@ class AbqBusLocationInterface():
 
 		return validCoordinates, lat, lng
 
-	def orderMasterDict(self):
-		for key, value in self.masterDict.items():
-			self.masterDict[key] = sorted(value, key=getTimeKey)
+	# def orderMasterDict(self):
+	# 	for key, value in self.masterList.items():
+	# 		self.masterList[key] = sorted(value, key=getTimeKey)
 
-	def removeInvalidTimeStamps(self):
-		for key, value in self.masterDict.items():
-			matchTimeList = []
-			idx = 0
-			while(idx < len(value)):
-				timeStamp = value[idx]['timeStamp']
-				if timeStamp not in matchTimeList:
-					matchTimeList.append(timeStamp)
-				else:
-					value.pop(idx)
+	# def removeInvalidTimeStamps(self):
+	# 	for key, value in self.masterList.items():
+	# 		matchTimeList = []
+	# 		idx = 0
+	# 		while(idx < len(value)):
+	# 			timeStamp = value[idx]['timeStamp']
+	# 			if timeStamp not in matchTimeList:
+	# 				matchTimeList.append(timeStamp)
+	# 			else:
+	# 				value.pop(idx)
 
-				idx += 1
+	# 			idx += 1
 
-			matchTimeList.sort()
+	# 		matchTimeList.sort()
 
-			# remove timestamps that are more than N seconds in the past
-			# not sure why these datapoints are in there
-			idx = 0
-			while(idx < len(value)):
-				timeStamp = value[idx]['timeStamp']
-				if (timeStamp < matchTimeList[-1] - TIME_BUFFER):
-					value.pop(idx)
+	# 		# remove timestamps that are more than N seconds in the past
+	# 		# not sure why these datapoints are in there
+	# 		idx = 0
+	# 		while(idx < len(value)):
+	# 			timeStamp = value[idx]['timeStamp']
+	# 			if (timeStamp < matchTimeList[-1] - TIME_BUFFER):
+	# 				value.pop(idx)
 
-				idx += 1
+	# 			idx += 1
 
-	def findValidRoutes(self, kmlDocChildren):
-		validRoutes = []
-		for item in kmlDocChildren:
-			itemTag = item.tag
-			if (itemTag.find('Placemark') != -1):
-				validRoutes.append(item.name)
+	# def findValidRoutes(self, kmlDocChildren):
+	# 	validRoutes = []
+	# 	for item in kmlDocChildren:
+	# 		itemTag = item.tag
+	# 		if (itemTag.find('Placemark') != -1):
+	# 			validRoutes.append(item.name)
 
-		return set(validRoutes)
+	# 	return set(validRoutes)
 
-	def initializeMasterDict(self, validRoutesSet):
-		self.masterDict = {}
-		for item in validRoutesSet:
-			self.masterDict[str(item)] = []
+	# def initializeMasterDict(self, validRoutesSet):
+	# 	self.masterList = {}
+	# 	for item in validRoutesSet:
+	# 		self.masterList = []
 
 	def convertTime(self, timeStamp):
 		hour, minute, sec = self.parseHumanTime(timeStamp)
