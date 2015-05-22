@@ -11,7 +11,7 @@ sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
 import processNode
 import timeApiKey
 
-UPDATE_INTERVAL_SECS = 13
+UPDATE_INTERVAL_SECS = 1
 TIME_BUFFER = 30
 REMOTE_DATA_URL = "http://data.cabq.gov/transit/realtime/route/route790.kml"
 TOTAL_SECS_IN_DAY = 24*60*60 
@@ -23,12 +23,13 @@ class AbqBusLocationInterface():
 	def __init__(self, processName=None, fullConfigPath=None):		
 		self.gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
 		self.done = False
-		epochStamp = self._getCurrentUtcTime()
-		self.adjustedSeedTime = epochStamp - 30
-		self.seedTimeTuple = time.gmtime(self.adjustedSeedTime)
-		seedTimeString = 'SeedTime: ' + str(self.seedTimeTuple.tm_hour) + ':' + \
-			str(self.seedTimeTuple.tm_min) + ':' + str(self.seedTimeTuple.tm_sec)
+		# epochStamp = self._getCurrentUtcTime()
+		# self.adjustedSeedTime = epochStamp - 30
+		# self.seedTimeTuple = time.gmtime(self.adjustedSeedTime)
+		# seedTimeString = 'SeedTime: ' + str(self.seedTimeTuple.tm_hour) + ':' + \
+		# 	str(self.seedTimeTuple.tm_min) + ':' + str(self.seedTimeTuple.tm_sec)
 		self.masterList = []
+		self.prevMasterList = []
 
 	def run (self):
 		while(not(self.done)):
@@ -36,7 +37,7 @@ class AbqBusLocationInterface():
 			kmlDoc = None
 			try:
 				kmlString = urllib.request.urlopen(REMOTE_DATA_URL).read()
-			except HTTPError as err:
+			except:
 				print ("Unable to download remote data")
 				self.gpsInterfaceNode.log(logLevel=3, message="Unable to download remote data")
 
@@ -75,18 +76,18 @@ class AbqBusLocationInterface():
 									'vehicleID': vehicleID,
 									'route': routeName,
 									'timeStamp': routeTime,
-									'lat': lat,
-									'lng': lng
+									'latitude': lat,
+									'longitude': lng
 								})
 
-							# print ('Route: ' + str(routeName) + \
-							# 	' Time: ' + str(routeTime) + \
-							# 	' Location: ' + routeLocation)
-					#self.orderMasterDict()
-					#self.removeInvalidTimeStamps()
-					print ('self.masterList: ' + str(self.masterList))
-					self.gpsInterfaceNode.send('rawGpsData', self.masterList)
-					self.gpsInterfaceNode.log(logLevel=0, message=self.masterList)
+					if (len(self.prevMasterList) != 0 and self.prevMasterList != self.masterList):
+						# print ('something new')
+						self.sendMsgs()
+						self.gpsInterfaceNode.log(logLevel=0, message=self.masterList)
+						
+					self.prevMasterList = self.masterList
+					self.masterList = []
+
 					time.sleep(UPDATE_INTERVAL_SECS)
 
 	def parseCoordinates(self, coordinatesString):
@@ -102,48 +103,8 @@ class AbqBusLocationInterface():
 
 		return validCoordinates, lat, lng
 
-	# def orderMasterDict(self):
-	# 	for key, value in self.masterList.items():
-	# 		self.masterList[key] = sorted(value, key=getTimeKey)
-
-	# def removeInvalidTimeStamps(self):
-	# 	for key, value in self.masterList.items():
-	# 		matchTimeList = []
-	# 		idx = 0
-	# 		while(idx < len(value)):
-	# 			timeStamp = value[idx]['timeStamp']
-	# 			if timeStamp not in matchTimeList:
-	# 				matchTimeList.append(timeStamp)
-	# 			else:
-	# 				value.pop(idx)
-
-	# 			idx += 1
-
-	# 		matchTimeList.sort()
-
-	# 		# remove timestamps that are more than N seconds in the past
-	# 		# not sure why these datapoints are in there
-	# 		idx = 0
-	# 		while(idx < len(value)):
-	# 			timeStamp = value[idx]['timeStamp']
-	# 			if (timeStamp < matchTimeList[-1] - TIME_BUFFER):
-	# 				value.pop(idx)
-
-	# 			idx += 1
-
-	# def findValidRoutes(self, kmlDocChildren):
-	# 	validRoutes = []
-	# 	for item in kmlDocChildren:
-	# 		itemTag = item.tag
-	# 		if (itemTag.find('Placemark') != -1):
-	# 			validRoutes.append(item.name)
-
-	# 	return set(validRoutes)
-
-	# def initializeMasterDict(self, validRoutesSet):
-	# 	self.masterList = {}
-	# 	for item in validRoutesSet:
-	# 		self.masterList = []
+	def sendMsgs(self):
+		self.gpsInterfaceNode.send('gpsData', self.masterList)
 
 	def convertTime(self, timeStamp):
 		hour, minute, sec = self.parseHumanTime(timeStamp)

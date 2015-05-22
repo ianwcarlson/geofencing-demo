@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import json
+import numpy as np
 scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
@@ -12,15 +13,19 @@ import timeApiKey
 
 TIME_INCREMENT = 1
 MAX_TIMEOUT = 30
+NUM_TIME_INTERVAL = 13
+SECONDS_IN_DAY = 86400
 
 class RealTimeGpsSequencer():
 	def __init__(self, processName=None, fullConfigPath=None):		
 		self.gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
+		self.prevMasterList = []
+		self.interpDict = {}
+		self.internalCounter = 0
 
 	def run(self):
 		"""
-		Main run function receives GPS data chunks and sends them out when their
-		timestamps occur
+		Interpolates GPS points and sends them along in real-time 
 		"""
 		done = False
 		while(not(done)):
@@ -31,46 +36,102 @@ class RealTimeGpsSequencer():
 					if (itemDict['contents']['action'] == 'stop'):
 						done = True
 						break
-				elif(topic == 'rawGpsData'):	
-					self.masterDict = itemDict['contents']
-					self.masterTime = self.findMinTime(self.masterDict)
-					timeout = MAX_TIMEOUT
-					while(not(self.checkIfAllMessagesSent()) and timeout != 0):
-						self.sendCurrentMsg()
-						self.masterTime += TIME_INCREMENT
-						time.sleep(TIME_INCREMENT)
-						timeout -= TIME_INCREMENT
+				elif(topic == 'gpsData'):	
+					masterList = itemDict['contents']
+					# print ('masterList: ' + str(masterList))
+					#print ('masterList: ' + str(masterList))
+					if (len(self.prevMasterList) != 0):
+						self.interpolateAllValues(masterList)
+					else:
+						self.initializeInternalCounter(masterList)
 
-	def findMinTime(self, masterDict):
-		minTimesList = []
-		for key, value in masterDict.items():
-			minTimesList.append(value[0]['timeStamp'])
+					self.prevMasterList = masterList
 
-		minTimesList.sort()
-		return minTimesList[0]
+			self.playbackInterpGps()		
+			time.sleep(TIME_INCREMENT)
+			if (self.internalCounter > SECONDS_IN_DAY):
+				self.internalCounter = 0
+			else:				
+				self.internalCounter += TIME_INCREMENT
+			self.gpsInterfaceNode.log(logLevel=0, message='internalCount: ' + str(self.internalCounter))
 
-	def sendCurrentMsg(self):
-		for key, value in self.masterDict.items():
-			currentRouteDict = value[0]
-			if (currentRouteDict['timeStamp'] == self.masterTime):
-				gpsData = {
-					'id': key,
-					'latitude': currentRouteDict['lat'],
-					'longitude': currentRouteDict['lng'],
-					'timeStamp': currentRouteDict['timeStamp']
-				}
-				self.gpsInterfaceNode.send('gpsData', gpsData)
-				print ('gpsData: ' + str(gpsData))
-				value.pop(0)
+	def initializeInternalCounter(self, masterList):
+		self.internalCounter = SECONDS_IN_DAY
+		for item in masterList:
+			if (item['timeStamp'] < self.internalCounter):
+				self.internalCounter = item['timeStamp'] - 12
 
-	def checkIfAllMessagesSent(self):
-		allSent = True
-		for key, value in self.masterDict.items():
-			if (value != []):
-				allSent = False 
-				break
+	def playbackInterpGps(self):
+		'''
+		<vehicleID>:{
+			<route>: number,
+			<timeStampList>: list of numbers,
+			<latList>: list of latitude numbers,
+			<longList>: list of longitude numbers
+		}
+		'''
+		for key, value in self.interpDict.items():
+			foundIdx = len(value['timeStampList']) - 1
+			for idx in range(foundIdx + 1):
+				# print (str(value['timeStampList'][idx]))
+				if (value['timeStampList'][idx] >= self.internalCounter):
+					interpDict = {
+						'vehicleID': key,
+						'route': value['route'],
+						'timeStamp': value['timeStampList'][idx],
+						'latitude': value['latList'][idx],
+						'longitude': value['longList'][idx]
+					}
+					# print ('sending: ' + str(interpDict))
+					self.gpsInterfaceNode.send('interpGpsData', interpDict)
+					foundIdx = idx
+					break
 
-		return allSent
+			value['timeStampList'] = value['timeStampList'][foundIdx+1:]
+			value['latList'] = value['latList'][foundIdx+1:]
+			value['longList'] = value['longList'][foundIdx+1:]
+
+	def interpolateAllValues(self, newMasterList):
+		interpList = []
+		for item in newMasterList:
+			for prevItem in self.prevMasterList:
+				if (prevItem['vehicleID'] == item['vehicleID']):
+					timeStampList = self.calcXList(prevItem['timeStamp'],
+						item['timeStamp'], item['timeStamp'] - prevItem['timeStamp'])
+					latList = self.simpleLinearInterpolation(timeStampList,
+						prevItem['timeStamp'], item['timeStamp'],
+						prevItem['latitude'], item['latitude'])
+					longList = self.simpleLinearInterpolation(timeStampList,
+						prevItem['timeStamp'], item['timeStamp'],
+						prevItem['longitude'], item['longitude'])
+					itemID = item['vehicleID']
+					if (itemID not in self.interpDict):
+						self.interpDict[itemID] = {
+							'route': 0,
+							'timeStampList': [],
+							'latList': [],
+							'longList': []
+						}
+					self.interpDict[itemID]['timeStampList'] += timeStampList.tolist()
+					self.interpDict[itemID]['latList'] += latList
+					self.interpDict[itemID]['longList'] += longList
+					break
+
+		return interpList
+
+	def calcXList(self, x1, x2, numXInterval):
+		return np.linspace(x1, x2, num=numXInterval)
+
+	def simpleLinearInterpolation(self, xInterp, x1, x2, y1, y2):
+		'''
+		Interpolation using Numpy's library call
+		'''
+		yArray = np.array((y1, y2), dtype=np.float32)
+		xArray = np.array((x1, x2), dtype=np.float32)
+
+		yInterp = np.interp(xInterp, xArray, yArray)
+
+		return yInterp.tolist()
 
 if __name__ == '__main__':
 	gpsInterface = RealTimeGpsSequencer(sys.argv[1], sys.argv[2])

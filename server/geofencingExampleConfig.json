@@ -2,23 +2,23 @@
     "endPointsIds" : [
         {
             "id" : "GPS_IF_ENDPOINT_ADDR",
-            "address" : "tcp://127.0.0.1:5550"
+            "address" : "ipc://127.0.0.1:5550"
         },
         {
             "id" : "POINT_IN_POLY_ENDPOINT_ADDR",
-            "address" : "tcp://127.0.0.1:5561"
+            "address" : "ipc://127.0.0.1:5561"
         },
         {
             "id" : "WEB_SERVER_ENDPOINT_ADDR",
-            "address" : "tcp://127.0.0.1:5562"
+            "address" : "ipc://127.0.0.1:5562"
         },
         {
             "id" : "LOGGER_ENDPOINT_ADDR",
-            "address" : "tcp://127.0.0.1:5554"
+            "address" : "ipc://127.0.0.1:5554"
         },
         {
-            "id" : "GPS_SEQUENCER_ENDPOINT_ADDR",
-            "address" : "tcp://127.0.0.1:5567"
+            "id" : "GPS_INTERPOLATOR",
+            "address" : "ipc://127.0.0.1:5556"
         }
     ],    
     "processList" : [
@@ -47,28 +47,28 @@
             "endPoint": "GPS_IF_ENDPOINT_ADDR"
         },
         {
+            "processName": "gpsInterpolator",
+            "processPath": "/usr/local/geofencing-demo/server/realTimeGpsSequencer.py",
+            "endPoint": "GPS_INTERPOLATOR",
+            "subscriptions": [
+                {
+                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
+                    "topics" : ["proc", "gpsData"]
+                }
+            ]
+        },
+        {
             "processName": "pointInPolygon",
             "processPath": "/usr/local/geofencing-demo/server/pointInPolygon.py",
             "endPoint": "POINT_IN_POLY_ENDPOINT_ADDR",
             "subscriptions": [
                 {
-                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
-                    "topics" : ["proc", "gpsData"]
+                    "endPoint": "GPS_INTERPOLATOR",
+                    "topics" : ["proc", "interpGpsData"]
                 },
                 {
                     "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
                     "topics" : ["proc", "newPolygonPoints"]
-                }
-            ]
-        },
-        {
-            "processName": "realTimeGpsSequencer",
-            "processPath": "/usr/local/geofencing-demo/server/realTimeGpsSequencer.py",
-            "endPoint": "GPS_SEQUENCER_ENDPOINT_ADDR",
-            "subscriptions": [
-                {
-                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
-                    "topics" : ["proc", "rawGpsData"]
                 }
             ]
         },
@@ -78,8 +78,8 @@
             "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
             "subscriptions": [
                 {
-                    "endPoint": "GPS_IF_ENDPOINT_ADDR",
-                    "topics" : ["proc", "gpsData"]
+                    "endPoint": "GPS_INTERPOLATOR",
+                    "topics" : ["proc", "interpGpsData"]
                 },
                 {
                     "endPoint": "POINT_IN_POLY_ENDPOINT_ADDR",

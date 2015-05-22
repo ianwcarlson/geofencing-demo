@@ -27,3 +27,5 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN apt-get install -y python3-lxml
 RUN pip3 install pykml
 
+RUN apt-get install -y python3-numpy
+

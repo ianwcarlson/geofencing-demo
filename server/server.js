@@ -47,7 +47,7 @@ processNode.onReceive(function(err, topic, message){
 				pointInPolygon = message['contents'];	
 			}
 			break;
-		case ('gpsData'):
+		case ('interpGpsData'):
 			io.emit('newGpsPoint', message['contents']);
 			break;
 		default:

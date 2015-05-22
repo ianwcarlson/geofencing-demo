@@ -34,18 +34,20 @@ class PointInAPolygon():
                     if (itemDict['contents']['action'] == 'stop'):
                         done = True
                         break
-                elif(topic == 'gpsData'):
-                    gpsDataDict = itemDict['contents']
-                    isInside = self.pointInsidePolygon(gpsDataDict['latitude'], 
-                        gpsDataDict['longitude'], self.polygon)
+                # elif(topic == 'gpsData'):
+                #     gpsDataDict = itemDict['contents']
+                #     isInside = self.pointInsidePolygon(gpsDataDict['latitude'], 
+                #         gpsDataDict['longitude'], self.polygon)
 
-                    logMsg = 'Inside' if (isInside) else 'Outside'
-                    self.pointInPolygonNode.log(logLevel=0, message=logMsg)
-                    self.pointInPolygonNode.send('pointInPolygon', isInside)
+                #     logMsg = 'Inside' if (isInside) else 'Outside'
+                #     self.pointInPolygonNode.log(logLevel=0, message=logMsg)
+                #     self.pointInPolygonNode.send('pointInPolygon', isInside)
                 elif(topic == 'newPolygonPoints'):
                     self.pointInPolygonNode.log(logLevel=0, message=itemDict['contents'])
                     listOfTuples = self.convertDictsToTuples(itemDict['contents'])
                     self.polygon = listOfTuples
+
+            time.sleep(0.01)
 
     @staticmethod
     def convertDictsToTuples(listOfDicts):

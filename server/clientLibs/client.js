@@ -3,24 +3,48 @@ var socket = io();
 var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
 	osmAttrib = '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 	osm = L.tileLayer(osmUrl, {maxZoom: 18, attribution: osmAttrib}),
-	map = new L.Map('map', {layers: [osm], center: new L.LatLng(-37.7772, 175.2756), zoom: 15 });
+	map = new L.Map('map', {
+		layers: [osm], 
+		center: new L.LatLng(35.08444, -106.6505556), 
+		zoom: 15,
+		zoomAnimation: false,
+		fadeAnimation: false,
+		markerZoomAnimation: false
+	});
 
 var userMarker = null;
+var vehicleMarkerIDArray = [];
+
 socket.on('newGpsPoint', function(newGpsPoint){
 	var latlngPoint = new L.LatLng(newGpsPoint.latitude, newGpsPoint.longitude);
-	if (userMarker === null){
-		userMarker = new L.SmoothMarkerTransition(latlngPoint, {
-			traverseTime: 250
+	var marker = getVehicleMarker(newGpsPoint.vehicleID);
+	if (marker === null){
+		vehicleMarker = new L.SmoothMarkerTransition(latlngPoint, map, {
+			traverseTime: 1000,
+			markerID: newGpsPoint.vehicleID
 		});
-		userMarker.addTo(map);
+		vehicleMarkerIDArray.push(vehicleMarker);
+		vehicleMarker.addTo(map);
 		//userMarker = new L.Marker(latlngPoint);
 		//userMarker.addTo(map);
-		map.setView(latlngPoint, 15);
+		// map.setView(latlngPoint, 15);
 	} else {
-		userMarker.transition(latlngPoint);
+		marker.transition(latlngPoint);
 		//userMarker.setLatLng(latlngPoint);
 	}
 });
+
+function getVehicleMarker(vehicleID){
+	var marker = null;
+	var arrayLength = vehicleMarkerIDArray.length;
+	for (var i=0; i<arrayLength; i++){
+		if (vehicleMarkerIDArray[i].getMarkerID() === vehicleID){
+			marker = vehicleMarkerIDArray[i];
+			break;
+		}
+	}
+	return marker;
+}
 
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
