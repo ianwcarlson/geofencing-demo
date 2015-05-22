@@ -12,8 +12,23 @@ var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
 		markerZoomAnimation: false
 	});
 
+map.on('zoomstart', disableAllMarkerAnimations);
+map.on('zoomend', enableAllMarkerAnimations);
+
 var userMarker = null;
 var vehicleMarkerIDArray = [];
+
+function disableAllMarkerAnimations(){
+	vehicleMarkerIDArray.forEach(function(element){
+		element.disableTransition();
+	});
+}
+
+function enableAllMarkerAnimations(){
+	vehicleMarkerIDArray.forEach(function(element){
+		element.enableTransition();
+	});
+}
 
 socket.on('newGpsPoint', function(newGpsPoint){
 	var latlngPoint = new L.LatLng(newGpsPoint.latitude, newGpsPoint.longitude);
@@ -22,9 +37,12 @@ socket.on('newGpsPoint', function(newGpsPoint){
 		var color = getIconColor(newGpsPoint.route)
 		var icon = L.MakiMarkers.icon({icon: 'bus', color: color, size: "m"})
 		vehicleMarker = new L.SmoothMarkerTransition(latlngPoint, map, {
-			traverseTime: 1000,
+			traverseTime: 1400,
 			markerID: newGpsPoint.vehicleID,
-			icon: icon
+			icon: icon,
+			title: 'Route ' + newGpsPoint.route + 
+			'\nVehicle ' + newGpsPoint.vehicleID,
+			clickable: false
 		});
 		vehicleMarkerIDArray.push(vehicleMarker);
 		vehicleMarker.addTo(map);
