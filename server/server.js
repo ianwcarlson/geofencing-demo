@@ -23,10 +23,13 @@ var pathToLeafletDraw = path.join(__dirname,'clientLibs',
 var pathToLeafletSmooth = path.join(__dirname,'clientLibs',
 	'Leaflet.SmoothMarkerTransition','src');
 var pathToClient = path.join(__dirname,'clientLibs');
+var pathToMarkers = path.join(__dirname,'clientLibs',
+	'Leaflet.MakiMarkers');
 
 app.use(express.static(pathToLeafletDraw));
 app.use(express.static(pathToLeafletSmooth));
 app.use(express.static(pathToClient));
+app.use(express.static(pathToMarkers));
 
 io.on('connection', function(socket){
 	socket.on('newPolygonPoints', function(newPolygonPoints){			

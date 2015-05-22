@@ -38,8 +38,6 @@ class RealTimeGpsSequencer():
 						break
 				elif(topic == 'gpsData'):	
 					masterList = itemDict['contents']
-					# print ('masterList: ' + str(masterList))
-					#print ('masterList: ' + str(masterList))
 					if (len(self.prevMasterList) != 0):
 						self.interpolateAllValues(masterList)
 					else:
@@ -59,7 +57,7 @@ class RealTimeGpsSequencer():
 		self.internalCounter = SECONDS_IN_DAY
 		for item in masterList:
 			if (item['timeStamp'] < self.internalCounter):
-				self.internalCounter = item['timeStamp'] - 12
+				self.internalCounter = item['timeStamp'] - NUM_TIME_INTERVAL
 
 	def playbackInterpGps(self):
 		'''
@@ -73,7 +71,6 @@ class RealTimeGpsSequencer():
 		for key, value in self.interpDict.items():
 			foundIdx = len(value['timeStampList']) - 1
 			for idx in range(foundIdx + 1):
-				# print (str(value['timeStampList'][idx]))
 				if (value['timeStampList'][idx] >= self.internalCounter):
 					interpDict = {
 						'vehicleID': key,
@@ -107,7 +104,7 @@ class RealTimeGpsSequencer():
 					itemID = item['vehicleID']
 					if (itemID not in self.interpDict):
 						self.interpDict[itemID] = {
-							'route': 0,
+							'route': item['route'],
 							'timeStampList': [],
 							'latList': [],
 							'longList': []

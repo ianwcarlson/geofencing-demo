@@ -14,6 +14,7 @@
     "tests"
   ],
   "dependencies": {
-    "leaflet.draw": "~0.2.4"
+    "leaflet.draw": "~0.2.4",
+    "Leaflet.MakiMarkers": "~1.0.1"
   }
 }

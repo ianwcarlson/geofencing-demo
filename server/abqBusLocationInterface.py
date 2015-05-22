@@ -13,7 +13,7 @@ import timeApiKey
 
 UPDATE_INTERVAL_SECS = 1
 TIME_BUFFER = 30
-REMOTE_DATA_URL = "http://data.cabq.gov/transit/realtime/route/route790.kml"
+REMOTE_DATA_URL = "http://data.cabq.gov/transit/realtime/route/allroutes.kml"
 TOTAL_SECS_IN_DAY = 24*60*60 
 
 def getTimeKey(inDict):
@@ -23,17 +23,12 @@ class AbqBusLocationInterface():
 	def __init__(self, processName=None, fullConfigPath=None):		
 		self.gpsInterfaceNode = processNode.ProcessNode(fullConfigPath, processName)
 		self.done = False
-		# epochStamp = self._getCurrentUtcTime()
-		# self.adjustedSeedTime = epochStamp - 30
-		# self.seedTimeTuple = time.gmtime(self.adjustedSeedTime)
-		# seedTimeString = 'SeedTime: ' + str(self.seedTimeTuple.tm_hour) + ':' + \
-		# 	str(self.seedTimeTuple.tm_min) + ':' + str(self.seedTimeTuple.tm_sec)
 		self.masterList = []
 		self.prevMasterList = []
 
 	def run (self):
 		while(not(self.done)):
-			kmlString = ''
+			kmlString = b''
 			kmlDoc = None
 			try:
 				kmlString = urllib.request.urlopen(REMOTE_DATA_URL).read()
@@ -42,7 +37,7 @@ class AbqBusLocationInterface():
 				self.gpsInterfaceNode.log(logLevel=3, message="Unable to download remote data")
 
 			fixedString = kmlString.decode('utf8', 'replace')
-			if (kmlString != ''):
+			if (kmlString != b''):
 				try:
 					kmlDoc = parser.fromstring(fixedString.encode())
 				except:
@@ -50,8 +45,6 @@ class AbqBusLocationInterface():
 
 				if (kmlDoc != None):
 					documentChildren = kmlDoc.Document.getchildren()
-					# validRoutes = self.findValidRoutes(documentChildren)
-					# self.initializeMasterDict(validRoutes)
 					for item in documentChildren:
 						vehicleID = ''
 						routeTime = ''
@@ -81,7 +74,6 @@ class AbqBusLocationInterface():
 								})
 
 					if (len(self.prevMasterList) != 0 and self.prevMasterList != self.masterList):
-						# print ('something new')
 						self.sendMsgs()
 						self.gpsInterfaceNode.log(logLevel=0, message=self.masterList)
 						
@@ -117,10 +109,6 @@ class AbqBusLocationInterface():
 		hour = -1
 		minute = -1
 		sec = -1
-		# pdb.set_trace()
-		# if (len(timeStamp) < 10):
-		# 	gpsInterfaceNode.log(logLevel=3, message="Invalid time stamp")
-		# else:
 		firstIndex = -1
 		firstIndex = timeStamp.find(':') 
 		if (firstIndex != -1):
@@ -134,7 +122,6 @@ class AbqBusLocationInterface():
 				if (thirdIndex != -1):
 					sec = int(timeStamp[secondIndex+1: thirdIndex])
 
-		# print (str(hour) + ':' + str(minute) + ':' + str(sec))
 		if (hour == -1 or minute == -1 or sec == -1):
 			gpsInterfaceNode.log(logLevel=3, message="Unable to parse time stamp")
 
