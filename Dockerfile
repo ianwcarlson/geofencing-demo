@@ -20,7 +20,7 @@ RUN cd node-v0.10.30 && ./configure && make && make install
 
 # Must install node dependencies before changing
 # sym link to python3
-#RUN cd /usr/local/geofencing-demo && npm install
+RUN cd /usr/local/geofencing-demo && npm install && bower install
 
 RUN rm /usr/bin/python
 RUN ln -s /usr/bin/python3 /usr/bin/python
