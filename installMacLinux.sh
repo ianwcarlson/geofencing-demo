@@ -9,7 +9,6 @@ REPOMOUNTPATH="/usr/local/"$REPONAME
 DOCKERPATH=$(/usr/bin/which docker)
 BOOT2DOCKERPATH=$(/usr/bin/which boot2docker)
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-echo $BOOT2DOCKERPATH
 if [ "$BOOT2DOCKERPATH" ] || [ "$DOCKERPATH" ]; then
 	if [ "$BOOT2DOCKERPATH" ]; then
 		boot2docker start

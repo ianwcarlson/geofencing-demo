@@ -36,7 +36,7 @@ socket.on('newGpsPoint', function(newGpsPoint){
 	if (marker === null){
 		var color = getIconColor(newGpsPoint.route)
 		var icon = L.MakiMarkers.icon({icon: 'bus', color: color, size: "m"})
-		vehicleMarker = new L.SmoothMarkerTransition(latlngPoint, map, {
+		vehicleMarker = new L.SmoothMarkerTransition(latlngPoint, {
 			traverseTime: 1400,
 			markerID: newGpsPoint.vehicleID,
 			icon: icon,

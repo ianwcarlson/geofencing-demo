@@ -9,7 +9,7 @@ scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
 import processNode
-import timeApiKey
+# import timeApiKey
 
 UPDATE_INTERVAL_SECS = 1
 TIME_BUFFER = 30
@@ -144,17 +144,17 @@ class AbqBusLocationInterface():
 
 		return newSecs
 
-	def _getCurrentUtcTime(self):
-		epochStamp = 0
-		url = 'http://api.timezonedb.com/?key=' + timeApiKey.key + \
-		'&zone=America/Denver&format=json'		
-		timeJson = urllib.request.urlopen(url).read()
-		try:
-			epochStamp = json.loads(timeJson.decode())['timestamp']
-		except:
-			gpsInterfaceNode.log(logLevel=3, message="Unable to get current MST time")
+	# def _getCurrentUtcTime(self):
+	# 	epochStamp = 0
+	# 	url = 'http://api.timezonedb.com/?key=' + timeApiKey.key + \
+	# 	'&zone=America/Denver&format=json'		
+	# 	timeJson = urllib.request.urlopen(url).read()
+	# 	try:
+	# 		epochStamp = json.loads(timeJson.decode())['timestamp']
+	# 	except:
+	# 		gpsInterfaceNode.log(logLevel=3, message="Unable to get current MST time")
 
-		return epochStamp
+	# 	return epochStamp
 
 if __name__ == '__main__':
 	if (len(sys.argv) == 3):

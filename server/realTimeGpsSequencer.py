@@ -9,7 +9,7 @@ scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
 import processNode
-import timeApiKey
+# import timeApiKey
 
 TIME_INCREMENT = 1
 MAX_TIMEOUT = 30
