@@ -1,3 +1,4 @@
 {
-  "directory" : "server/clientLibs"
+  "directory" : "server/clientLibs",
+  "interactive": false
 }
