@@ -1,9 +1,6 @@
 [submodule "lib/python-zeromq-pubsub"]
 	path = lib/python-zeromq-pubsub
 	url = https://github.com/ianwcarlson/python-zeromq-pubsub
-[submodule "lib/Leaflet.SmoothMarkerTransition"]
-	path = lib/Leaflet.SmoothMarkerTransition
-	url = https://github.com/ianwcarlson/Leaflet.SmoothMarkerTransition
 [submodule "server/clientLibs/Leaflet.SmoothMarkerTransition"]
 	path = server/clientLibs/Leaflet.SmoothMarkerTransition
 	url = https://github.com/ianwcarlson/Leaflet.SmoothMarkerTransition
