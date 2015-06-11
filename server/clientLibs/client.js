@@ -7,7 +7,7 @@ var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
 		layers: [osm], 
 		center: new L.LatLng(35.08444, -106.6505556), 
 		zoom: 15,
-		zoomAnimation: false,
+		zoomAnimation: true,
 		fadeAnimation: false,
 		markerZoomAnimation: false
 	});
