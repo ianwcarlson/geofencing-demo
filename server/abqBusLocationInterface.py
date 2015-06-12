@@ -34,7 +34,6 @@ class AbqBusLocationInterface():
 			try:
 				kmlString = urllib.request.urlopen(REMOTE_DATA_URL).read()
 			except:
-				print ("Unable to download remote data")
 				self.gpsInterfaceNode.log(logLevel=3, message="Unable to download remote data")
 
 			fixedString = kmlString.decode('utf8', 'replace')

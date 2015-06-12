@@ -19,6 +19,10 @@
         {
             "id" : "GPS_INTERPOLATOR",
             "address" : "ipc://127.0.0.1:5556"
+        },
+        {
+            "id" : "PROCESS_MANAGER",
+            "address" : "ipc://127.0.0.1:7777"
         }
     ],    
     "processList" : [
@@ -38,6 +42,10 @@
                 {
                     "endPoint": "WEB_SERVER_ENDPOINT_ADDR",
                     "topics": ["log", "proc"]
+                },
+                {
+                    "endPoint": "PROCESS_MANAGER",
+                    "topics": ["log", "proc"]
                 }
             ]
         },
@@ -45,6 +53,11 @@
             "processName": "gpsInterface",
             "processPath": "/usr/local/geofencing-demo/server/abqBusLocationInterface.py",
             "endPoint": "GPS_IF_ENDPOINT_ADDR"
+        },
+        {
+            "processName": "processManager",
+            "processPath": "/usr/local/geofencing-demo/server/main.py",
+            "endPoint": "PROCESS_MANAGER"
         },
         {
             "processName": "gpsInterpolator",

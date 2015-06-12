@@ -55,7 +55,8 @@ io.on('connection', function(socket){
 });
 
 http.listen(3698, function(){
-  console.log('listening on *:3698');
+	processNode.log(1, 'Web server listening on *:3698');
+	console.log('listening on *:3698');
 });	
 
 processNode.onReceive(function(err, topic, message){

@@ -13,4 +13,4 @@ import processManager
 processManager = processManager.ProcessManager()	
 processManager.importProcessConfig(os.path.join(
 	scriptDir,'geofencingExampleConfig.json'))
-processManager.run()
+processManager.run(autoRestart=True)
