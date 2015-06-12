@@ -1,3 +1,10 @@
+/**
+ * Main Node.js/Express server.  Provides static file serving to client.
+ * Uses Socket.io websocket API to send JSON objects back and forth with the 
+ * client.  Also uses ZeroMQ wrapper to import the server-side network config
+ * and publish JSON objects to subscribers
+ */
+
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);

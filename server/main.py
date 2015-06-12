@@ -1,3 +1,7 @@
+"""
+.. module:: main
+    :synopsis: entry point for all processes
+"""
 import pdb
 import os
 import sys

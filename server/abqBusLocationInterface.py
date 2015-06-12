@@ -9,15 +9,11 @@ scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
 import processNode
-# import timeApiKey
 
 UPDATE_INTERVAL_SECS = 1
 TIME_BUFFER = 30
 REMOTE_DATA_URL = "http://data.cabq.gov/transit/realtime/route/allroutes.kml"
 TOTAL_SECS_IN_DAY = 24*60*60 
-
-def getTimeKey(inDict):
-	return inDict['timeStamp']
 
 class AbqBusLocationInterface():
 	def __init__(self, processName=None, fullConfigPath=None):		
@@ -27,6 +23,10 @@ class AbqBusLocationInterface():
 		self.prevMasterList = []
 
 	def run (self):
+		'''
+		Polls the public bus data that's in a KML format.  The data is then parsed 
+		and stuffed into a data structure that's optimal to publish internally.  
+		'''
 		while(not(self.done)):
 			kmlString = b''
 			kmlDoc = None
@@ -83,6 +83,10 @@ class AbqBusLocationInterface():
 					time.sleep(UPDATE_INTERVAL_SECS)
 
 	def parseCoordinates(self, coordinatesString):
+		'''
+		Custom little parser that converts the comma delimted latitude and 
+		longitude coordinates into pythonic data
+		'''
 		validCoordinates = False
 		lng = -360
 		lat = -360
@@ -96,9 +100,16 @@ class AbqBusLocationInterface():
 		return validCoordinates, lat, lng
 
 	def sendMsgs(self):
+		'''
+		Wrapper for publishing/sending the parsed GPS data structure to 
+		subscribers
+		'''
 		self.gpsInterfaceNode.send('gpsData', self.masterList)
 
 	def convertTime(self, timeStamp):
+		'''
+		Converts human time to time of day (in seconds)
+		'''
 		hour, minute, sec = self.parseHumanTime(timeStamp)
 		return self.convertHumanToSecsInDay(hour, minute, sec)
 
@@ -143,18 +154,6 @@ class AbqBusLocationInterface():
 			newSecs = TOTAL_SECS_IN_DAY + newSecs
 
 		return newSecs
-
-	# def _getCurrentUtcTime(self):
-	# 	epochStamp = 0
-	# 	url = 'http://api.timezonedb.com/?key=' + timeApiKey.key + \
-	# 	'&zone=America/Denver&format=json'		
-	# 	timeJson = urllib.request.urlopen(url).read()
-	# 	try:
-	# 		epochStamp = json.loads(timeJson.decode())['timestamp']
-	# 	except:
-	# 		gpsInterfaceNode.log(logLevel=3, message="Unable to get current MST time")
-
-	# 	return epochStamp
 
 if __name__ == '__main__':
 	if (len(sys.argv) == 3):

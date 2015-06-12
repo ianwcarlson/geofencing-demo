@@ -1,3 +1,10 @@
+"""
+.. module:: RealTimeGpsSequencer
+    :synopsis: Subscribes to non-interpolated GPS data, interpolates
+    the data to achieve 1 second time resolution, and replays 
+    interpolated data in real-time
+"""
+
 import urllib.request
 import pdb
 import os
@@ -9,7 +16,6 @@ scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
 import processNode
-# import timeApiKey
 
 TIME_INCREMENT = 1
 MAX_TIMEOUT = 30
@@ -54,6 +60,11 @@ class RealTimeGpsSequencer():
 			self.gpsInterfaceNode.log(logLevel=0, message='internalCount: ' + str(self.internalCounter))
 
 	def initializeInternalCounter(self, masterList):
+		'''
+		Initializes the internal counter to whatever the current time of day is 
+		in seconds.  Buffers the initial value to ensure non of the timeStamps 
+		coming in get skipped.
+		'''
 		self.internalCounter = SECONDS_IN_DAY
 		for item in masterList:
 			if (item['timeStamp'] < self.internalCounter):
@@ -80,7 +91,6 @@ class RealTimeGpsSequencer():
 						'latitude': value['latList'][idx],
 						'longitude': value['longList'][idx]
 					}
-					# print ('sending: ' + str(interpDict))
 					
 					self.gpsInterfaceNode.send('interpGpsData', interpDict)
 					masterList.append({
@@ -97,6 +107,11 @@ class RealTimeGpsSequencer():
 		self.gpsInterfaceNode.send('interpMasterGpsData', masterList)
 
 	def interpolateAllValues(self, newMasterList):
+		'''
+		Interpolates the latitude and longitude values separately using
+		linear interpolation and stuffs the results into a dictionary that
+		uses the vehicle ID as a key.
+		'''
 		interpList = []
 		for item in newMasterList:
 			for prevItem in self.prevMasterList:
@@ -125,6 +140,9 @@ class RealTimeGpsSequencer():
 		return interpList
 
 	def calcXList(self, x1, x2, numXInterval):
+		'''
+		Returns a vector of equally spaced time stamps
+		'''
 		return np.linspace(x1, x2, num=numXInterval)
 
 	def simpleLinearInterpolation(self, xInterp, x1, x2, y1, y2):

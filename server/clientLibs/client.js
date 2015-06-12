@@ -46,12 +46,8 @@ socket.on('newGpsPoint', function(newGpsPoint){
 		});
 		vehicleMarkerIDArray.push(vehicleMarker);
 		vehicleMarker.addTo(map);
-		//userMarker = new L.Marker(latlngPoint);
-		//userMarker.addTo(map);
-		// map.setView(latlngPoint, 15);
 	} else {
 		marker.transition(latlngPoint);
-		//userMarker.setLatLng(latlngPoint);
 	}
 });
 
