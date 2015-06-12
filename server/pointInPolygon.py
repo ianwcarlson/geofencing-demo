@@ -31,7 +31,7 @@ class PointInAPolygon():
             responseListDict = self.pointInPolygonNode.receive()
             for itemDict in responseListDict:
                 topic = itemDict['topic']
-                contents = con
+                contents = itemDict['contents']
                 if (topic == 'proc'):
                     if (contents['action'] == 'stop'):
                         done = True
@@ -39,11 +39,13 @@ class PointInAPolygon():
                 elif(topic == 'interpMasterGpsData'):
                     gpsDataList = contents
                     isInside = False
+
                     for userID, listOfPolygonPoints in self.polygonDict.items():
                         for gpsCoordinatesDict in gpsDataList:
                             isInside = self.pointInsidePolygon(gpsCoordinatesDict['latitude'], 
                                 gpsCoordinatesDict['longitude'], listOfPolygonPoints)
                             if (isInside):
+                                # print ('Found Inside!')
                                 break
 
                         logMsg = 'Inside' if (isInside) else 'Outside'
@@ -55,7 +57,7 @@ class PointInAPolygon():
                 elif(topic == 'newPolygonPoints'):
                     self.pointInPolygonNode.log(logLevel=0, message=contents)
                     userID = contents['id']
-                    if (self.polygonDict[userID] != []):
+                    if (not(userID in self.polygonDict)):
                         self.polygonDict[userID] = []
                     newPolygonPoints = contents['newPolygonPoints']
                     listOfTuples = self.convertDictsToTuples(newPolygonPoints)

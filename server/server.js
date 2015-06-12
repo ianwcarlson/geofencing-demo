@@ -35,13 +35,11 @@ var pointInPolygon = {};
 
 io.on('connection', function(socket){
 	pointInPolygon[socket.id] = false;
-	console.log('socket.id: ', socket.id);
 	socket.on('newPolygonPoints', function(newPolygonPoints){
 		var objectToSend = {'id': socket.id, 'newPolygonPoints': newPolygonPoints};			
 		processNode.send('newPolygonPoints', objectToSend);
 	});
 	socket.on('disconnect', function(){
-		console.log('disconnecting socket.id: ', socket.id);
 		processNode.send('deletePolygonPoints', {'id': socket.id});
 		delete pointInPolygon[socket.id]
 	});
@@ -54,12 +52,12 @@ http.listen(3698, function(){
 processNode.onReceive(function(err, topic, message){
 	switch (topic){
 		case ('pointInPolygon'):
-			var socketID = message['id'];
-			var isInside = message['isInside'];
+			var socketID = message.contents.id;
+			var isInside = message.contents.isInside; 
 			if (typeof(pointInPolygon[socketID]) !== undefined && 
 				isInside != pointInPolygon[socketID]){
-				io.to(socketID).emit('pointInPolygon', message['contents']);
-				pointInPolygon[socketID] = isInside;	
+				io.to(socketID).emit('pointInPolygon', isInside);
+				pointInPolygon[socketID] = isInside;
 			}
 			break;
 		case ('interpGpsData'):
