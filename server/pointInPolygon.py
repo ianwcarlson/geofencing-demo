@@ -16,15 +16,15 @@ import processNode
 class PointInAPolygon():
     def __init__(self, processName, fullConfigPath):
         self.polygonDict = {}
-        self.polygon = [(-33.416032,-70.593016), (-33.415370,-70.589604),
-            (-33.417340,-70.589046), (-33.417949,-70.592351),
-            (-33.416032,-70.593016)]
         self.pointInPolygonNode = processNode.ProcessNode(fullConfigPath, processName)
 
     def run(self):
         """
         Main run function receives gpsData, processes them, and sends them to
-        subscribers
+        subscribers.  This function manages the data structure that contains
+        a unique id string and a list of vertices for user-drawn polygon.  When
+        a new GPS point comes in the its location is tested against the provided
+        polygon vertices.
         """
         done = False
         while(not(done)):
@@ -45,7 +45,6 @@ class PointInAPolygon():
                             isInside = self.pointInsidePolygon(gpsCoordinatesDict['latitude'], 
                                 gpsCoordinatesDict['longitude'], listOfPolygonPoints)
                             if (isInside):
-                                # print ('Found Inside!')
                                 break
 
                         logMsg = 'Inside' if (isInside) else 'Outside'
