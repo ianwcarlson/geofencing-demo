@@ -64,7 +64,7 @@
             "subscriptions": [
                 {
                     "endPoint": "GPS_INTERPOLATOR",
-                    "topics" : ["proc", "interpGpsData"]
+                    "topics" : ["proc", "interpMasterGpsData"]
                 },
                 {
                     "endPoint": "WEB_SERVER_ENDPOINT_ADDR",

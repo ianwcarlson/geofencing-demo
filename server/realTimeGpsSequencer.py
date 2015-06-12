@@ -68,6 +68,7 @@ class RealTimeGpsSequencer():
 			<longList>: list of longitude numbers
 		}
 		'''
+		masterList = []
 		for key, value in self.interpDict.items():
 			foundIdx = len(value['timeStampList']) - 1
 			for idx in range(foundIdx + 1):
@@ -80,13 +81,20 @@ class RealTimeGpsSequencer():
 						'longitude': value['longList'][idx]
 					}
 					# print ('sending: ' + str(interpDict))
+					
 					self.gpsInterfaceNode.send('interpGpsData', interpDict)
+					masterList.append({
+						'latitude': interpDict['latitude'], 
+						'longitude': interpDict['longitude']
+					})
 					foundIdx = idx
 					break
 
 			value['timeStampList'] = value['timeStampList'][foundIdx+1:]
 			value['latList'] = value['latList'][foundIdx+1:]
 			value['longList'] = value['longList'][foundIdx+1:]
+
+		self.gpsInterfaceNode.send('interpMasterGpsData', masterList)
 
 	def interpolateAllValues(self, newMasterList):
 		interpList = []

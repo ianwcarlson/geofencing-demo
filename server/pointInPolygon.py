@@ -15,6 +15,7 @@ import processNode
 
 class PointInAPolygon():
     def __init__(self, processName, fullConfigPath):
+        self.polygonDict = {}
         self.polygon = [(-33.416032,-70.593016), (-33.415370,-70.589604),
             (-33.417340,-70.589046), (-33.417949,-70.592351),
             (-33.416032,-70.593016)]
@@ -30,22 +31,43 @@ class PointInAPolygon():
             responseListDict = self.pointInPolygonNode.receive()
             for itemDict in responseListDict:
                 topic = itemDict['topic']
+                contents = con
                 if (topic == 'proc'):
-                    if (itemDict['contents']['action'] == 'stop'):
+                    if (contents['action'] == 'stop'):
                         done = True
                         break
-                # elif(topic == 'gpsData'):
-                #     gpsDataDict = itemDict['contents']
-                #     isInside = self.pointInsidePolygon(gpsDataDict['latitude'], 
-                #         gpsDataDict['longitude'], self.polygon)
+                elif(topic == 'interpMasterGpsData'):
+                    gpsDataList = contents
+                    isInside = False
+                    for userID, listOfPolygonPoints in self.polygonDict.items():
+                        for gpsCoordinatesDict in gpsDataList:
+                            isInside = self.pointInsidePolygon(gpsCoordinatesDict['latitude'], 
+                                gpsCoordinatesDict['longitude'], listOfPolygonPoints)
+                            if (isInside):
+                                break
 
-                #     logMsg = 'Inside' if (isInside) else 'Outside'
-                #     self.pointInPolygonNode.log(logLevel=0, message=logMsg)
-                #     self.pointInPolygonNode.send('pointInPolygon', isInside)
+                        logMsg = 'Inside' if (isInside) else 'Outside'
+                        self.pointInPolygonNode.log(logLevel=0, message=logMsg)
+                        self.pointInPolygonNode.send('pointInPolygon', {
+                            'id': userID,
+                            'isInside': isInside
+                        })
                 elif(topic == 'newPolygonPoints'):
-                    self.pointInPolygonNode.log(logLevel=0, message=itemDict['contents'])
-                    listOfTuples = self.convertDictsToTuples(itemDict['contents'])
-                    self.polygon = listOfTuples
+                    self.pointInPolygonNode.log(logLevel=0, message=contents)
+                    userID = contents['id']
+                    if (self.polygonDict[userID] != []):
+                        self.polygonDict[userID] = []
+                    newPolygonPoints = contents['newPolygonPoints']
+                    listOfTuples = self.convertDictsToTuples(newPolygonPoints)
+                    self.polygonDict[userID] = listOfTuples
+
+                elif(topic == 'deletePolygonPoints'):
+                    userID = contents['id']
+                    try:
+                        self.polygonDict.pop(userID, None)
+                    except:
+                        self.pointInPolygonNode.log(logLevel=2, \
+                            message="user ID key not found in polygon structure")
 
             time.sleep(0.01)
 
