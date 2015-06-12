@@ -12,6 +12,7 @@ import sys
 import time
 import json
 import numpy as np
+import math
 scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))

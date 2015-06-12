@@ -19,7 +19,7 @@ var pathToLib = path.join(__dirname,'..','lib','python-zeromq-pubsub',
 	'src','processNode.js');
 
 var processNode = require(pathToLib)(pathToNetworkConfig, 
-	nameOfProcess, 0);
+	nameOfProcess, 1);
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
@@ -42,11 +42,13 @@ var pointInPolygon = {};
 
 io.on('connection', function(socket){
 	pointInPolygon[socket.id] = false;
+	processNode.log(1, 'Client connection: ' + socket.id);
 	socket.on('newPolygonPoints', function(newPolygonPoints){
 		var objectToSend = {'id': socket.id, 'newPolygonPoints': newPolygonPoints};			
 		processNode.send('newPolygonPoints', objectToSend);
 	});
 	socket.on('disconnect', function(){
+		processNode.log(1, 'Client disconnect: ' + socket.id);
 		processNode.send('deletePolygonPoints', {'id': socket.id});
 		delete pointInPolygon[socket.id]
 	});

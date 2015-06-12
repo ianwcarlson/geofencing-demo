@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import json
+import math
 scriptDir=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(scriptDir)
 sys.path.append(os.path.join(scriptDir,'..','lib','python-zeromq-pubsub','src'))
@@ -74,13 +75,53 @@ class AbqBusLocationInterface():
 								})
 
 					if (len(self.prevMasterList) != 0 and self.prevMasterList != self.masterList):
+						newIdx = 0
+						filteredMasterList = self.masterList
+						while(newIdx < len(filteredMasterList)):
+							newItem = filteredMasterList[newIdx]
+							vehicleFound = False
+							for oldItem in self.prevMasterList:
+								if (newItem['vehicleID'] == oldItem['vehicleID']):
+									latList = [oldItem['latitude'], newItem['latitude']]
+									longList = [oldItem['longitude'], newItem['longitude']]
+									invalid = self.detectAndSanitizeGPSJumps(latList, longList)
+									if (invalid):
+										filteredMasterList.pop(newIdx)
+									break
+
+							newIdx += 1
+
 						self.sendMsgs()
-						self.gpsInterfaceNode.log(logLevel=0, message=self.masterList)
+						self.gpsInterfaceNode.log(logLevel=0, message=filteredMasterList)
 						
 					self.prevMasterList = self.masterList
 					self.masterList = []
 
 					time.sleep(UPDATE_INTERVAL_SECS)
+
+	def detectAndSanitizeGPSJumps(self, latList, longList):
+		'''
+		Checks to see if there are large GPS jumps and filter them out
+		'''
+		invalid = False
+		for idx in range(len(latList) - 1):
+			delta = self.calcRectDistanceKM(latList[idx], latList[idx+1], longList[idx], longList[idx+1])
+			if (delta > 1):
+				self.gpsInterfaceNode.log(logLevel=0, message="Large GPS jump detected: " + str(delta))
+				invalid = True
+				break
+
+		return invalid
+
+	def calcRectDistanceKM(self, lat1, lat2, long1, long2):
+		'''
+		Calculate distance using equirectangular approximation
+		'''
+		EARTHRADIUSKM = 6371
+		x = (math.radians(long2 - long1)) * math.cos(math.radians((lat1+lat2)/2))
+		y = math.radians(lat2 - lat1)
+		d = math.sqrt(x*x + y*y) * EARTHRADIUSKM
+		return d
 
 	def parseCoordinates(self, coordinatesString):
 		'''
