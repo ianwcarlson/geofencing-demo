@@ -1,7 +1,7 @@
 # geofencing-demo
 
 This app polls the open Albuquerque bus tracking data and displays the bus
-locations in real-time.  The source data only updates every 13-15 seconds to interpolation is used to get 1 second update rate.  The user can draw a polygon on the map and it will change its color to green if any bus is located within the polygon.  The polygon will change to red if there are no bus contained within.  Currently, only one polygon is supported, but it can be deleted and redrawn.  
+locations in real-time.  The source data only updates every 13-15 seconds so interpolation is used to get 1 second update rate.  The user can draw a polygon on the map and it will change its color to green if any bus is located within the polygon.  The polygon will change to red if there is no bus contained within.  Currently, only one polygon is supported, but it can be deleted and redrawn.  
 
 The ZeroMQ framework (Python) is used to publish/subscribe messages to/from
 each micro service that's running server side via IPC.  A node server utilizes the ZeroMQ framework to communicate to server-side services, but also uses websockets (via socket.io library) to communicate with the client.  All the processes run asychronously.  
